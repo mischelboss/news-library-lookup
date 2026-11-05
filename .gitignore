@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+.env
+.env.*
+*.har
+*.xpi
+*.zip
+cookies*.json
+storage-state*.json
+browser-profile/

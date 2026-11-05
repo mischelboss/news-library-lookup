@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Spiegel via VÖBB — Prototype",
+  "version": "0.2.0",
+  "description": "Checks paid Spiegel homepage articles in your signed-in VÖBB Genios session.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://bib-voebb.genios.de/*"],
+  "background": {"scripts": ["matching.js", "background.js"]},
+  "content_scripts": [{"matches": ["https://www.spiegel.de/*"], "js": ["spiegel.js"], "run_at": "document_idle"}],
+  "action": {"default_title": "Spiegel via VÖBB", "default_popup": "popup.html"},
+  "content_security_policy": {"extension_pages": "default-src 'self'; script-src 'self'; connect-src 'self' https://bib-voebb.genios.de; object-src 'none'; base-uri 'none'"},
+  "browser_specific_settings": {"gecko": {"id": "spiegel-voebb-prototype@local.invalid", "strict_min_version": "109.0"}}
+}

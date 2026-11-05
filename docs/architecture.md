@@ -6,7 +6,11 @@
 
 `matching.js` is a pure matching module loaded before the background script. It normalizes titles and ranks source-validated documents. Tests load the same file directly through Node.
 
-`popup.*` provides pause/reset controls, basic queue status, and an explicit VÖBB sign-in link.
+`popup.*` provides pause, retry, and cache-clear controls, basic queue status, and an explicit VÖBB sign-in link.
+
+Failures are classified (`network`, `timeout`, `http`, `content-type`, `json`, `shape`, `internal`). The category appears in the popup status and the background console; nothing else about the request or response is logged. Any failure still starts the one-minute cooldown. The popup's retry control clears the cooldown and writes a `retryToken` to `storage.local`; open Spiegel pages listen for that change and re-check only badges that failed.
+
+The JSON request and the manual search link are built from one parameter set in `background.js`; they differ only in path (`/api/searchResult/Alle` versus `/searchResult/Alle`).
 
 ## Website interface
 

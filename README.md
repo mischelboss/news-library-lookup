@@ -25,7 +25,9 @@ Temporary add-ons disappear on Firefox restart. Reload them through about:debugg
 
 A direct badge signals a title match, not guaranteed reading rights. Genios checks full-text access when the document opens.
 
-The popup has **Pause checks** and **Clear cache & retry** controls. After signing in again or clearing the cache, reload Spiegel. Background searches create no tabs. An already-running request may finish after pausing.
+The popup has **Pause checks**, **Retry failed**, and **Clear cache** controls. After signing in again, choose **Retry failed** to re-check failed badges without reloading; successful badges are not queried again. After clearing the cache, reload Spiegel. Background searches create no tabs. An already-running request may finish after pausing.
+
+The popup status names the last failure category (for example `network`, `HTTP 503`, `timeout`, `content-type`, `json`, or `shape`). The background console logs the same category only, never queries, URLs, headers, cookies, or response bodies.
 
 ## Work on another device
 
@@ -52,7 +54,7 @@ npm test
 npm run package
 ```
 
-Packaging writes `dist/spiegel-voebb-0.2.0.zip` from an explicit extension-file allowlist. In environments where Python is named `python` rather than `python3`, run `python scripts/package.py` directly.
+Packaging writes `dist/spiegel-voebb-<version>.zip` from the explicit allowlist in `scripts/package-files.json`. `npm run check` fails if an extension file or a file referenced by the manifest or popup is missing from that list. In environments where Python is named `python` rather than `python3`, run `python scripts/package.py` directly.
 
 CI runs the same checks, tests, and packaging, then uploads a downloadable extension ZIP as a workflow artifact. It does not call Genios or publish to a browser store.
 
@@ -67,7 +69,8 @@ After editing, click **Reload** for the extension in about:debugging, then reloa
 - Search only SPIEGEL Plus, requesting the ten newest candidates.
 - Direct badges require at least three meaningful words with an exact normalized title match, or at least five meaningful words with a token F1 score of 0.94 or greater.
 - The best candidate must lead the second by at least 0.12. Ambiguous or generic titles remain manual searches.
-- Dates, authors, and teaser text do not currently affect the score.
+- Freshness guard: only candidates published within 7 days of today (plus one day of time-zone slack) can win or tie. An older or undated exact match stays a manual search, so a recurring title cannot link to an old edition. Dates are read from `ERSCHEINUNGSDATUM` as `YYYY-MM-DD`, `DD.MM.YYYY`, or `YYYYMMDD`; if Genios uses another format, direct badges disappear and the background console reports `direct match withheld: undated`. Two editions of a weekly series that both fall inside the window still count as ambiguous.
+- Authors and teaser text do not affect the score, and the card's own date is not used yet.
 - Equivalent titles share a queued request. Requests run sequentially, with an 800 ms gap, a 15-second timeout, and a one-minute failure cooldown.
 
 ## Privacy and limitations
@@ -82,8 +85,8 @@ Publisher markup and the internal Genios endpoint can change. Session renewal, r
 
 ```text
 extension/       Firefox extension sources
-tests/           Deterministic matching and background regression checks
-scripts/         Syntax/manifest validation and ZIP packaging
+tests/           Deterministic matching, background, and content-script checks (tests/support holds the simulated browser)
+scripts/         Syntax/manifest/allowlist validation and ZIP packaging
 docs/            Architecture and validation notes
 .github/         CI workflow
 ```

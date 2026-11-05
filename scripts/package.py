@@ -1,4 +1,8 @@
-"""Package extension sources only; no browser profiles, tests, or local credentials."""
+"""Package extension sources only; no browser profiles, tests, or local credentials.
+
+The explicit file list lives in scripts/package-files.json so that `npm run check`
+can verify it against the manifest and the extension directory.
+"""
 from pathlib import Path
 import json
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -8,8 +12,7 @@ source = root / 'extension'
 version = json.loads((source / 'manifest.json').read_text())['version']
 destination = root / 'dist' / f'spiegel-voebb-{version}.zip'
 destination.parent.mkdir(exist_ok=True)
-files = ['manifest.json', 'matching.js', 'background.js', 'spiegel.js',
-         'popup.html', 'popup.js', 'popup.css']
+files = json.loads((root / 'scripts' / 'package-files.json').read_text())
 with ZipFile(destination, 'w', ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(source / name, name)

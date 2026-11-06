@@ -5,6 +5,10 @@ globalThis.VoebbMatch = (() => {
   // Freshness guard: a direct badge needs a candidate published within this many days of today.
   // It cannot tell apart two editions of a weekly series that fall inside the window.
   const MAX_AGE_DAYS = 7;
+  // Second pass for older pieces (for example long-lived Bestseller articles): if nothing matched
+  // inside the normal window, the same results are ranked again with this wider window, and then
+  // only an exact title counts.
+  const EXTENDED_MAX_AGE_DAYS = 365;
   const DATE_FORMATS = [
     [/^(\d{4})-(\d{2})-(\d{2})(?!\d)/, m => [m[1], m[2], m[3]]],
     [/^(\d{2})\.(\d{2})\.(\d{4})(?!\d)/, m => [m[3], m[2], m[1]]],
@@ -42,6 +46,7 @@ globalThis.VoebbMatch = (() => {
   function rank(title, docs, options = {}) {
     const now = options.now ?? Date.now();
     const maxAgeDays = options.maxAgeDays ?? MAX_AGE_DAYS;
+    const extendedMaxAgeDays = options.extendedMaxAgeDays ?? EXTENDED_MAX_AGE_DAYS;
     const original = normalize(title), wanted = tokens(title);
     const unique = new Map();
     for (const doc of docs) {
@@ -64,10 +69,14 @@ globalThis.VoebbMatch = (() => {
     const fresh = ranked.filter(candidate => isFresh(candidate.time, now, maxAgeDays));
     const winner = decide(fresh, wanted.length);
     if (winner) return { kind: 'match', candidate: winner };
+    // Nothing matched in the normal window: look again at the same results in the wider window.
+    // Ties and weak leads still fail, and a loose (non-exact) old match is never trusted.
+    const older = decide(ranked.filter(candidate => isFresh(candidate.time, now, extendedMaxAgeDays)), wanted.length);
+    if (older?.exact) return { kind: 'match', candidate: older, extended: true };
     const unguarded = decide(ranked, wanted.length);
     const reason = unguarded ? (unguarded.time === null ? 'undated' : 'stale') : undefined;
     return { kind: 'search', candidates: ranked.slice(0, 3), reason };
   }
-  return { normalize, tokens, query, parseDate, rank, MAX_AGE_DAYS };
+  return { normalize, tokens, query, parseDate, rank, MAX_AGE_DAYS, EXTENDED_MAX_AGE_DAYS };
 })();
 if (typeof module !== 'undefined') module.exports = globalThis.VoebbMatch;

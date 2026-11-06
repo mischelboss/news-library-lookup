@@ -1,10 +1,10 @@
 # Architecture and current boundaries
 
-`spiegel.js` runs in the publisher page, detects paid cards, adds isolated badge UI, and asks the background process for matches. It sends only a title, not an arbitrary URL. A mutation observer handles newly inserted cards.
+`spiegel.js` runs in the publisher page, detects paid cards, adds an isolated icon (a shadow-root host placed right after Spiegel's "+" flag inside the headline link, whose own link opens Genios in a new tab), and asks the background process for matches. It sends only a title, not an arbitrary URL. A mutation observer handles newly inserted cards.
 
 `background.js` validates the sending origin and top-level frame, deduplicates titles, queues searches, checks host permission, handles session/network failure, and stores bounded local cache entries. Only the extension's own pages may toggle or reset the service.
 
-`matching.js` is a pure matching module loaded before the background script. It normalizes titles and ranks source-validated documents. Tests load the same file directly through Node.
+`matching.js` is a pure matching module loaded before the background script. It normalizes titles and ranks source-validated documents in two passes over the same response: a 7-day freshness window, then a 365-day window that accepts only exact titles. The search request itself carries no date constraint. Tests load the same file directly through Node.
 
 `popup.*` provides pause, retry, and cache-clear controls, basic queue status, and an explicit VÖBB sign-in link.
 

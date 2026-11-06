@@ -54,7 +54,7 @@ async function keyFor(title) {
 
 function searchMessage(result) {
   if (result.kind === 'match') return 'Strong title match in SPIEGEL Plus. Full-text access depends on your VÖBB session.';
-  if (result.reason === 'stale') return `The closest title match is more than ${VoebbMatch.MAX_AGE_DAYS} days old, so it may be a different edition. Search Genios to check manually.`;
+  if (result.reason === 'stale') return `The closest title match is more than ${VoebbMatch.EXTENDED_MAX_AGE_DAYS} days old, so it may be a different edition. Search Genios to check manually.`;
   if (result.reason === 'undated') return 'The closest title match has no readable date, so it is not linked directly. Search Genios to check manually.';
   return 'No sufficiently confident match. Search Genios to check manually.';
 }
@@ -94,12 +94,14 @@ async function lookup(title) {
     if (!state.enabled) return { kind: 'disabled' };
     lastStatus = 'Background search is working.';
     if (result.reason) console.info(`[spiegel-voebb] direct match withheld: ${result.reason}`);
+    if (result.extended) console.info('[spiegel-voebb] matched an older article in the extended window');
     return {
       kind: result.kind,
       url: result.kind === 'match' ? `${ORIGIN}/document/${encodeURIComponent(result.candidate.id)}` : searchUrl(title),
       matchedTitle: result.candidate?.title,
       date: result.candidate?.date,
       reason: result.reason,
+      extended: result.extended,
       message: searchMessage(result),
     };
   } catch (error) {
@@ -160,4 +162,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
     await browser.storage.local.set({ retryToken: Date.now() });
     return { ok: true };
   });
+});
+
+// Show the setup and privacy page once, on a fresh install (not on updates or browser starts).
+browser.runtime.onInstalled.addListener(details => {
+  if (details.reason === 'install') browser.tabs.create({ url: browser.runtime.getURL('onboarding.html') });
 });

@@ -62,6 +62,11 @@ class FakeElement {
       this.children.push(child);
     }
   }
+  after(node) {
+    const siblings = this.parent.children;
+    siblings.splice(siblings.indexOf(this) + 1, 0, node);
+    node.parent = this.parent;
+  }
   remove() { if (this.parent) { this.parent.children.splice(this.parent.children.indexOf(this), 1); this.parent = null; } }
   replaceWith(node) {
     const siblings = this.parent.children;
@@ -99,6 +104,8 @@ class FakeDocument extends FakeElement {
     this.html.append(this.body);
   }
   createElement(tag) { return new FakeElement(tag, this); }
+  createElementNS(namespace, tag) { const el = this.createElement(tag); el.namespaceURI = namespace; return el; }
+  getElementById(id) { return this.querySelector(`[id="${id}"]`); }
   // h('article', { 'aria-label': 'x' }, child, 'text') builds an element tree.
   h(tag, attrs = {}, ...children) {
     const el = this.createElement(tag);

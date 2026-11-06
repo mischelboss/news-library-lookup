@@ -20,7 +20,7 @@ function response({ ok = true, status = 200, contentType = 'application/json', b
 
 function createBackground({ stored = { enabled: true, cache: {} }, documents = [doc('SPPL__a')] } = {}) {
   const clock = { now: NOW };
-  const state = { mode: 'ok', status: 503, permission: true, documents, gate: null, calls: [], saved: [], logs: [], stored: JSON.parse(JSON.stringify(stored)) };
+  const state = { mode: 'ok', status: 503, permission: true, documents, gate: null, calls: [], saved: [], logs: [], tabs: [], stored: JSON.parse(JSON.stringify(stored)) };
   const log = level => (...args) => state.logs.push({ level, text: args.join(' ') });
   const context = {
     VoebbMatch: match, URL, URLSearchParams, TextEncoder, AbortController, crypto: webcrypto,
@@ -35,7 +35,13 @@ function createBackground({ stored = { enabled: true, cache: {} }, documents = [
         get: async defaults => ({ ...defaults, ...JSON.parse(JSON.stringify(state.stored)) }),
         set: async values => { const copy = JSON.parse(JSON.stringify(values)); state.saved.push(copy); Object.assign(state.stored, copy); },
       } },
-      runtime: { id: 'test', getURL: () => 'moz-extension://test/', onMessage: { addListener: fn => { state.listener = fn; } } },
+      runtime: {
+        id: 'test',
+        getURL: path => `moz-extension://test/${path === '/' ? '' : path}`,
+        onMessage: { addListener: fn => { state.listener = fn; } },
+        onInstalled: { addListener: fn => { state.installed = fn; } },
+      },
+      tabs: { create: async options => { state.tabs.push(options); } },
     },
     fetch: async (url, init) => {
       state.calls.push(url);

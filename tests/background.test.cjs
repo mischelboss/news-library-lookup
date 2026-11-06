@@ -194,12 +194,12 @@ test('the status counts only unexpired cache entries', async () => {
   assert.equal((await bg.own({ type: 'status' })).cached, 0);
 });
 
-test('a stale exact match is not linked directly and says why', async () => {
-  const bg = createBackground({ documents: [doc('SPPL__old', TITLE, { date: '2026-09-01' })] });
+test('an exact match older than the extended window is not linked directly and says why', async () => {
+  const bg = createBackground({ documents: [doc('SPPL__old', TITLE, { date: '2024-09-01' })] });
   const result = await bg.lookup(TITLE);
   assert.equal(result.kind, 'search');
   assert.equal(result.reason, 'stale');
-  assert(result.message.includes('days old'));
+  assert(result.message.includes('more than 365 days old'));
   assert.equal(new URL(result.url).pathname, '/searchResult/Alle');
   assert(bg.state.logs.some(entry => entry.text.includes('withheld: stale')));
 });
@@ -216,4 +216,25 @@ test('the current edition wins over an old edition with the same title', async (
   const result = await bg.lookup(TITLE);
   assert.equal(result.kind, 'match');
   assert.equal(result.url, 'https://bib-voebb.genios.de/document/SPPL__new');
+});
+
+test('an older exact match is found by re-ranking the same response, with no second request', async () => {
+  const bg = createBackground({ documents: [doc('SPPL__bestseller', TITLE, { date: '2026-06-01' })] });
+  const result = await bg.lookup(TITLE);
+  assert.equal(result.kind, 'match');
+  assert.equal(result.extended, true);
+  assert.equal(result.url, 'https://bib-voebb.genios.de/document/SPPL__bestseller');
+  assert.equal(bg.state.calls.length, 1, 'the wider window needs no extra Genios request');
+  assert(!bg.state.calls[0].searchParams.has('date'), 'the request itself has no date constraint');
+  assert(bg.state.logs.some(entry => entry.text.includes('older article')));
+  const cached = await bg.lookup(TITLE);
+  assert.equal(cached.cached, true);
+  assert.equal(cached.extended, true, 'the older-article hint survives the cache');
+});
+
+test('a normal-window match is not flagged as older', async () => {
+  const bg = createBackground();
+  const result = await bg.lookup(TITLE);
+  assert.equal(result.kind, 'match');
+  assert.equal(result.extended, undefined);
 });

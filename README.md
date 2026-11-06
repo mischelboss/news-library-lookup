@@ -13,7 +13,7 @@ A Firefox extension prototype that checks paid articles on the Spiegel homepage 
 5. Sign in normally at https://bib-voebb.genios.de/ in the same Firefox profile. A private window or isolated container might not share its session with extension background requests.
 6. Open or reload https://www.spiegel.de/.
 
-Temporary add-ons disappear on Firefox restart. Reload them through about:debugging while developing. If the previous prototype with the same extension ID is already loaded, remove it first or reload it from this checkout so you edit the installed source.
+Temporary add-ons disappear on Firefox restart. Reload them through about:debugging while developing. Version 0.3.0 changed the extension ID to `@spiegel-voebb`; remove any older temporary prototype first so you edit the source you actually load. Firefox 140 or later is required.
 
 ## Badges
 
@@ -28,6 +28,17 @@ A direct badge signals a title match, not guaranteed reading rights. Genios chec
 The popup has **Pause checks**, **Retry failed**, and **Clear cache** controls. After signing in again, choose **Retry failed** to re-check failed badges without reloading; successful badges are not queried again. After clearing the cache, reload Spiegel. Background searches create no tabs. An already-running request may finish after pausing.
 
 The popup status names the last failure category (for example `network`, `HTTP 503`, `timeout`, `content-type`, `json`, or `shape`). The background console logs the same category only, never queries, URLs, headers, cookies, or response bodies.
+
+## Install a signed package
+
+You do not need the repository to use a signed package. The maintainer provides a signed `spiegel-voebb-<version>.xpi` (see docs/releasing.md for how it is made). The extension is Firefox desktop only for now.
+
+1. Use Firefox 140 or later on a computer.
+2. Open the `.xpi` in Firefox (drag it onto a window, or File → Open File) and read the permission prompt. It lists access to VÖBB Genios and Spiegel and the data collected ("website content": the headlines sent to Genios).
+3. After adding it, the setup page opens. Sign in to https://bib-voebb.genios.de/ in the same Firefox profile with your own VÖBB account, then open https://www.spiegel.de/.
+4. To update, open the newer `.xpi` the same way. Settings and cache are kept.
+
+Each person uses their own library account. Nothing is shared between users or through GitHub.
 
 ## Work on another device
 
@@ -75,7 +86,7 @@ After editing, click **Reload** for the extension in about:debugging, then reloa
 
 ## Privacy and limitations
 
-Queries go directly from the browser to Genios, which may log them. This extension never reads or stores passwords, cookies, or tokens; Firefox manages eligible session cookies.
+Queries go directly from the browser to Genios, which may log them. The manifest declares this as required data collection of type `websiteContent`, so Firefox shows it when the extension is installed. This extension never reads or stores passwords, cookies, or tokens; Firefox manages eligible session cookies.
 
 Up to 400 cache entries are kept locally: strong matches for six hours and uncertain results for 20 minutes. Keys are hashed normalized headlines; values may include matched article titles, dates, and links. They can reveal reading interests. Clear them using the popup; they do not sync through Firefox or GitHub.
 

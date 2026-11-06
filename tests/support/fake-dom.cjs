@@ -99,6 +99,7 @@ class FakeDocument extends FakeElement {
     this.html.append(this.body);
   }
   createElement(tag) { return new FakeElement(tag, this); }
+  getElementById(id) { return this.querySelector(`[id="${id}"]`); }
   // h('article', { 'aria-label': 'x' }, child, 'text') builds an element tree.
   h(tag, attrs = {}, ...children) {
     const el = this.createElement(tag);

@@ -161,3 +161,8 @@ browser.runtime.onMessage.addListener((message, sender) => {
     return { ok: true };
   });
 });
+
+// Show the setup and privacy page once, on a fresh install (not on updates or browser starts).
+browser.runtime.onInstalled.addListener(details => {
+  if (details.reason === 'install') browser.tabs.create({ url: browser.runtime.getURL('onboarding.html') });
+});

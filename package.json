@@ -1,6 +1,6 @@
 {
   "name": "spiegel-voebb",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Firefox extension linking paid Spiegel homepage articles to VÖBB Genios matches.",
   "engines": {"node": ">=22"},

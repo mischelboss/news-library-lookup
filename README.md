@@ -15,15 +15,18 @@ A Firefox extension prototype that checks paid articles on the Spiegel homepage 
 
 Temporary add-ons disappear on Firefox restart. Reload them through about:debugging while developing. Version 0.3.0 changed the extension ID to `@spiegel-voebb`; remove any older temporary prototype first so you edit the source you actually load. Firefox 140 or later is required.
 
-## Badges
+## Icons
 
-| Badge | Meaning |
+Each paid headline gets a small round icon right after Spiegel's own "+" icon. It never takes extra space under the article. Hover for details; every icon opens Genios in a **new tab**, so the Spiegel page stays where it is.
+
+| Icon | Meaning |
 | --- | --- |
-| Über VÖBB lesen | A strong, unambiguous title match in SPIEGEL Plus; opens its Genios record in the current tab |
-| In Genios suchen | No sufficiently confident match; opens a manual search in the current tab |
-| VÖBB anmelden / erneut prüfen | A session, permission, or network problem interrupted searching |
+| Grey magnifier | The search is still queued or running |
+| Green check ("Über VÖBB lesen") | A strong, unambiguous title match in SPIEGEL Plus; opens its Genios record. If the article is older than a week, the tooltip says so |
+| Blue magnifier ("In Genios suchen") | No sufficiently confident match; opens a manual search |
+| Amber "!" ("VÖBB anmelden / erneut prüfen") | A session, permission, or network problem interrupted searching; opens Genios so you can sign in |
 
-A direct badge signals a title match, not guaranteed reading rights. Genios checks full-text access when the document opens.
+A green icon signals a title match, not guaranteed reading rights. Genios checks full-text access when the document opens.
 
 The popup has **Pause checks**, **Retry failed**, and **Clear cache** controls. After signing in again, choose **Retry failed** to re-check failed badges without reloading; successful badges are not queried again. After clearing the cache, reload Spiegel. Background searches create no tabs. An already-running request may finish after pausing.
 
@@ -80,7 +83,8 @@ After editing, click **Reload** for the extension in about:debugging, then reloa
 - Search only SPIEGEL Plus, requesting the ten newest candidates.
 - Direct badges require at least three meaningful words with an exact normalized title match, or at least five meaningful words with a token F1 score of 0.94 or greater.
 - The best candidate must lead the second by at least 0.12. Ambiguous or generic titles remain manual searches.
-- Freshness guard: only candidates published within 7 days of today (plus one day of time-zone slack) can win or tie. An older or undated exact match stays a manual search, so a recurring title cannot link to an old edition. Dates are read from `ERSCHEINUNGSDATUM` as `YYYY-MM-DD`, `DD.MM.YYYY`, or `YYYYMMDD`; if Genios uses another format, direct badges disappear and the background console reports `direct match withheld: undated`. Two editions of a weekly series that both fall inside the window still count as ambiguous.
+- Freshness guard, two passes over the same results. First, only candidates published within 7 days of today (plus one day of time-zone slack) can win or tie, so a recurring title cannot link to an old edition. If that finds nothing, the same results are ranked again with a window of 365 days; here only an exact title counts, a tie stays ambiguous, and the icon's tooltip says the article is older. This catches long-lived pieces such as Bestseller articles without sending a second request to Genios. Older or undated matches beyond that stay manual searches.
+- Dates are read from `ERSCHEINUNGSDATUM` as `YYYY-MM-DD`, `DD.MM.YYYY`, or `YYYYMMDD`. If Genios uses another format, direct matches disappear and the background console reports `direct match withheld: undated`. Two editions of a weekly series that both fall inside the first window still count as ambiguous.
 - Authors and teaser text do not affect the score, and the card's own date is not used yet.
 - Equivalent titles share a queued request. Requests run sequentially, with an 800 ms gap, a 15-second timeout, and a one-minute failure cooldown.
 

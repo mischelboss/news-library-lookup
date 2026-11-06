@@ -48,8 +48,8 @@ Run on a clean Firefox profile, ideally on a second computer or with a new profi
 
 - Installing the signed file shows the consent text and the host access. The setup page opens once; restarting Firefox does not open it again.
 - The toolbar icon appears. The popup shows status without errors.
-- After signing in to VÖBB Genios, the Spiegel homepage shows badges. A green one opens the right article's Genios record.
-- With a signed-out session, badges turn into "VÖBB anmelden / erneut prüfen"; after signing in, **Retry failed** recovers them without a reload.
+- After signing in to VÖBB Genios, the Spiegel homepage shows an icon after each paid +. A green one opens the right article's Genios record in a new tab.
+- With a signed-out session, icons turn amber ("VÖBB anmelden / erneut prüfen"); after signing in, **Retry failed** recovers them without a reload.
 - Installing a newer version over an old one keeps the cache and the pause setting.
 
 If anything here fails, fix it before sending the file; a bad first release is hard to recall.

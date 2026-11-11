@@ -8,7 +8,7 @@ How to turn the repository into a signed `.xpi` that can be installed and kept a
 | --- | --- | --- |
 | Extension ID | `@spiegel-voebb` | Keys the local settings and cache of every install. AMO checks it is unique when you first sign. After the first signed release, never change it: a new ID is a different extension. |
 | Minimum Firefox | 140.0 | Firefox 140 shows data-collection consent at install. Older versions ignore the declaration. |
-| Declared data | `websiteContent` (required) | Headline text of paid Spiegel cards is sent to Genios. Firefox shows this in the install prompt. Keep it in step with the code, `onboarding.html`, and the README. |
+| Declared data | `websiteContent` (required) | Headline text of paid Spiegel and Tagesspiegel cards is sent to Genios. Firefox shows this in the install prompt. Keep it in step with the code, `onboarding.html`, and the README. |
 | Updates | Manual: send the new `.xpi` | No `update_url` is set, so there is no automatic update channel. |
 
 About updates: Firefox keeps using the `update_url` of the version that is installed. If you ever want automatic self-hosted updates, the version users first install must already contain it; adding it later means each user installs by hand once more. If you publish on AMO later, a listed add-on updates itself. Until then, installing a newer signed `.xpi` with the same ID should upgrade in place and keep the user's settings.
@@ -38,15 +38,16 @@ About updates: Firefox keeps using the `update_url` of the version that is insta
 
 1. Use Firefox 140 or later on a computer.
 2. Open the `.xpi` file in Firefox (drag it onto a Firefox window, or File → Open File).
-3. Read the permission prompt. It lists access to VÖBB Genios and Spiegel and the data the extension collects ("website content"). Add the extension.
-4. The setup page opens. Sign in to VÖBB Genios in the same Firefox profile, then open spiegel.de.
-5. To update: open the new `.xpi` the same way.
+3. Read the permission prompt. It lists access to VÖBB Genios, Spiegel, and Tagesspiegel and the data the extension collects ("website content"). Add the extension.
+4. The setup page opens. Sign in to VÖBB Genios in the same Firefox profile, then open spiegel.de or tagesspiegel.de.
+5. To update: open the new `.xpi` the same way. An update that adds a site (0.4.0 added tagesspiegel.de) asks for the new site permission again; users should accept it.
 
 ## Smoke test (do this before sending it out)
 
 Run on a clean Firefox profile, ideally on a second computer or with a new profile:
 
 - Installing the signed file shows the consent text and the host access. The setup page opens once; restarting Firefox does not open it again.
+- Both news sites work: after signing in, spiegel.de and tagesspiegel.de each show icons next to their paid markers, and a green Tagesspiegel icon opens the right Genios record.
 - The toolbar icon appears. The popup shows status without errors.
 - After signing in to VÖBB Genios, the Spiegel homepage shows an icon after each paid +. A green one opens the right article's Genios record in a new tab.
 - With a signed-out session, icons turn amber ("VÖBB anmelden / erneut prüfen"); after signing in, **Retry failed** recovers them without a reload.

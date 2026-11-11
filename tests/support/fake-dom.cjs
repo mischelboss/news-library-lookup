@@ -3,15 +3,16 @@
 
 function parseSelector(text) {
   return text.split(',').map(part => part.trim().split(/\s+/).map(compound => {
-    const found = /^([a-z0-9]*)((?:\[[^\]]+\])*)$/i.exec(compound);
+    const found = /^([a-z0-9]*)((?:\.[\w-]+|\[[^\]]+\])*)$/i.exec(compound);
     if (!found) throw new Error(`Unsupported selector in fake DOM: ${compound}`);
+    const classes = [...found[2].matchAll(/\.([\w-]+)/g)].map(c => c[1]);
     const attrs = [...found[2].matchAll(/\[([\w-]+)(?:(~?=)"([^"]*)")?\]/g)].map(a => ({ name: a[1], op: a[2], value: a[3] }));
-    return { tag: found[1].toLowerCase(), attrs };
+    return { tag: found[1].toLowerCase(), classes, attrs };
   }));
 }
 
-function matchesCompound(el, { tag, attrs }) {
-  return (!tag || el.tagName.toLowerCase() === tag) && attrs.every(({ name, op, value }) => {
+function matchesCompound(el, { tag, classes, attrs }) {
+  return (!tag || el.tagName.toLowerCase() === tag) && classes.every(name => (el.getAttribute('class') || '').split(/\s+/).includes(name)) && attrs.every(({ name, op, value }) => {
     if (!el.hasAttribute(name)) return false;
     const actual = el.getAttribute(name);
     if (!op) return true;
@@ -48,7 +49,7 @@ class FakeElement {
     });
   }
   get isConnected() { let node = this; while (node.parent) node = node.parent; return node === this.ownerDocument; }
-  get href() { const value = this.attributes.get('href'); return value === undefined ? '' : new URL(value, 'https://www.spiegel.de/').href; }
+  get href() { const value = this.attributes.get('href'); return value === undefined ? '' : new URL(value, this.ownerDocument?.baseURI ?? 'https://www.spiegel.de/').href; }
   set href(value) { this.attributes.set('href', String(value)); }
   get textContent() { return this.children.map(child => child.nodeType === 3 ? child.data : child.textContent).join(''); }
   set textContent(value) { this.children = [{ nodeType: 3, data: String(value), parent: this }]; }
@@ -77,6 +78,10 @@ class FakeElement {
   attachShadow() { this.shadowRoot = new FakeElement('shadow-root', this.ownerDocument); this.shadowRoot.nodeType = 11; return this.shadowRoot; }
   addEventListener(type, handler) { this.listeners.set(type, handler); }
   getBoundingClientRect() { return { top: this.top }; }
+  closest(selector) {
+    for (let node = this; node && node.nodeType === 1; node = node.parent) if (node.matches(selector)) return node;
+    return null;
+  }
   matches(selector) { return parseSelector(selector).some(chain => matchesChain(this, chain)); }
   querySelectorAll(selector) {
     const chains = parseSelector(selector);

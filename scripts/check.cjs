@@ -10,6 +10,22 @@ assert.equal(manifest.manifest_version, 3);
 assert.deepEqual(manifest.host_permissions, ['https://bib-voebb.genios.de/*']);
 assert(manifest.content_security_policy.extension_pages.includes("connect-src 'self' https://bib-voebb.genios.de"));
 
+// The publisher registry is the single source of truth for which sites the extension touches.
+const publishers = require(path.join(root, 'publishers.js')).all;
+assert(publishers.length > 0 && new Set(publishers.map(p => p.id)).size === publishers.length, 'publisher ids must be unique');
+for (const p of publishers) {
+  assert(/^https:\/\/[a-z0-9.-]+$/.test(p.origin), `${p.id}: origin must be an https origin without a path`);
+  assert(p.listingPaths.length > 0 && p.listingPaths.every(listing => listing.startsWith('/')), `${p.id}: listingPaths must be absolute paths`);
+  assert(p.sources.length > 0 && p.sources.every(source => typeof source === 'string' && source.trim()), `${p.id}: needs at least one Genios source`);
+  assert(typeof p.inspect === 'function' && typeof p.titleVariants === 'function' && typeof p.cards === 'string', `${p.id}: incomplete adapter`);
+}
+const expectedMatches = publishers.map(p => `${p.origin}/*`).sort();
+for (const script of manifest.content_scripts) {
+  assert.deepEqual([...script.matches].sort(), expectedMatches, 'content script matches must equal the publisher registry origins');
+  assert.equal(script.js.indexOf('publishers.js') >= 0 && script.js.indexOf('publishers.js') < script.js.indexOf('content.js'), true, 'publishers.js must load before content.js');
+}
+assert(manifest.background.scripts.indexOf('publishers.js') >= 0 && manifest.background.scripts.indexOf('publishers.js') < manifest.background.scripts.indexOf('background.js'), 'publishers.js must load before background.js');
+
 // Identity and data-use declarations that must stay valid for signing and for installs.
 const gecko = manifest.browser_specific_settings?.gecko ?? {};
 assert(/^[a-zA-Z0-9-._]*@[a-zA-Z0-9-._]+$/.test(gecko.id ?? '') && gecko.id.length <= 80, 'gecko.id must be a valid, stable extension ID');

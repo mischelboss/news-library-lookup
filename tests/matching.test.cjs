@@ -91,3 +91,81 @@ test('two editions inside the window stay ambiguous', () => {
   const result = rank([doc('SPPL__a', TITLE, { date: '2026-11-05' }), doc('SPPL__b', TITLE, { date: '2026-11-01' })]);
   assert.equal(result.kind, 'search');
 });
+
+// --- Sources, title variants, and cross-source duplicates ------------------------------------
+
+const KICKER_TITLE = '„Der Polarwirbel macht komische Sachen“: Droht Deutschland jetzt ein Eiswinter?';
+const HEADLINE = 'Droht Deutschland jetzt ein Eiswinter?';
+const FROM = (id, name, source, date = '2026-11-04') => doc(id, name, { source, date });
+const SOURCES = ['tagesspiegel.de', 'Der Tagesspiegel', 'Tagesspiegel CHECKPOINT'];
+const rankTsp = (docs, title = KICKER_TITLE, variants = [KICKER_TITLE, HEADLINE]) => match.rank(title, docs, { now: NOW, sources: SOURCES, variants });
+
+test('only the given sources are accepted, compared without case, accents, or spacing', () => {
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'tagesspiegel.de')]).kind, 'match');
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'DER   TAGESSPIEGEL')]).kind, 'match');
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'SPIEGEL Plus')]).kind, 'search');
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'Tagesspiegel')]).kind, 'search', 'a similar but different source name is not accepted');
+});
+
+test('a card title with a kicker matches a Genios title with or without it', () => {
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'tagesspiegel.de')]).kind, 'match');
+  assert.equal(rankTsp([FROM('A', KICKER_TITLE, 'tagesspiegel.de')]).kind, 'match');
+  assert.equal(rankTsp([FROM('A', 'Ein ganz anderer Titel über Eiswinter', 'tagesspiegel.de')]).kind, 'search');
+});
+
+test('the variant that fits best decides how many words must match', () => {
+  // The headline alone has only two meaningful words, so it must not produce a direct match on its own.
+  const short = 'Kicker hier: Zwei Wörter';
+  assert.equal(match.rank(short, [FROM('A', 'Zwei Wörter', 'tagesspiegel.de')], { now: NOW, sources: SOURCES, variants: [short, 'Zwei Wörter'] }).kind, 'search');
+});
+
+test('the same article in print and web is one article; the earlier-listed source wins', () => {
+  const result = rankTsp([FROM('PRINT', HEADLINE, 'Der Tagesspiegel'), FROM('WEB', HEADLINE, 'tagesspiegel.de')]);
+  assert.equal(result.kind, 'match');
+  assert.equal(result.candidate.id, 'WEB');
+});
+
+test('records from one source with the same title stay ambiguous, even next to another source’s copy', () => {
+  const result = rankTsp([FROM('W1', HEADLINE, 'tagesspiegel.de'), FROM('W2', HEADLINE, 'tagesspiegel.de'), FROM('P1', HEADLINE, 'Der Tagesspiegel')]);
+  assert.equal(result.kind, 'search');
+});
+
+test('collapsing duplicates does not let a stale copy hide the current one', () => {
+  const result = rankTsp([FROM('OLD_WEB', HEADLINE, 'tagesspiegel.de', '2026-09-01'), FROM('NEW_PRINT', HEADLINE, 'Der Tagesspiegel', '2026-11-04')]);
+  assert.equal(result.kind, 'match');
+  assert.equal(result.candidate.id, 'NEW_PRINT');
+});
+
+test('unexpected source names are reported only when nothing matched any expected source', () => {
+  const none = rankTsp([FROM('A', HEADLINE, 'SPIEGEL Plus'), FROM('B', HEADLINE, 'WELT ONLINE')]);
+  assert.deepEqual([...none.unexpectedSources].sort(), ['SPIEGEL Plus', 'WELT ONLINE']);
+  assert.equal(rankTsp([FROM('A', HEADLINE, 'tagesspiegel.de'), FROM('B', HEADLINE, 'WELT ONLINE')]).unexpectedSources, undefined);
+  assert.equal(rankTsp([]).unexpectedSources, undefined);
+});
+
+test('queryFor uses the variant with the fewest words', () => {
+  assert.equal(match.queryFor([KICKER_TITLE, HEADLINE]), 'droht deutschland jetzt eiswinter');
+  assert.equal(match.queryFor([TITLE]), match.query(TITLE));
+});
+
+test('invisible soft hyphens and zero-width characters are dropped, not turned into spaces', () => {
+  assert.equal(match.normalize('Wohnungs­genossenschaften'), 'wohnungsgenossenschaften');
+  assert.equal(match.normalize('Wohnungs​genossenschaften﻿'), 'wohnungsgenossenschaften');
+  assert.deepEqual(match.tokens('Berliner Wohnungs­genossenschaften'), match.tokens('Berliner Wohnungsgenossenschaften'));
+  const card = 'Traum vom Wohnen: Bei diesen Berliner Wohnungs­genossenschaften haben Sie eine Chance';
+  const result = match.rank(card, [doc('A', 'Traum vom Wohnen: Bei diesen Berliner Wohnungsgenossenschaften haben Sie eine Chance', { source: 'tagesspiegel.de', date: '2026-11-04' })], { now: NOW, sources: ['tagesspiegel.de'] });
+  assert.equal(result.kind, 'match');
+});
+
+test('a search result carries counts for diagnosing why nothing matched', () => {
+  const none = match.rank(TITLE, [], { now: NOW });
+  assert.deepEqual({ ...none.stats }, { results: 0, accepted: 0, bestScore: 0, bestExact: false });
+  const wrong = match.rank(TITLE, [doc('A', TITLE, { source: 'WELT ONLINE' })], { now: NOW });
+  assert.deepEqual({ ...wrong.stats }, { results: 1, accepted: 0, bestScore: 0, bestExact: false });
+  const different = match.rank(TITLE, [doc('A', 'Diese Swing Districts im Überblick')], { now: NOW });
+  assert.equal(different.stats.results, 1);
+  assert.equal(different.stats.accepted, 1);
+  assert(different.stats.bestScore > 0 && different.stats.bestScore < 0.94);
+  assert.equal(different.stats.bestExact, false);
+  assert.equal(match.rank(TITLE, [doc('A')], { now: NOW }).stats, undefined, 'a match has no failure stats');
+});

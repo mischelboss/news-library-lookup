@@ -107,7 +107,7 @@ for (const [mode, label, hint] of FAILURES) {
     assert.equal((await bg.own({ type: 'status' })).status, result.message);
     const warnings = bg.state.logs.filter(entry => entry.level === 'warn');
     assert.equal(warnings.length, 1);
-    assert.equal(warnings[0].text, `[spiegel-voebb] spiegel search failed: ${label}`);
+    assert.equal(warnings[0].text, `[news-library-lookup] spiegel search failed: ${label}`);
     const everything = bg.state.logs.map(entry => entry.text).join('\n');
     assert(!/genios|swing|districts|cookie|token/i.test(everything), everything);
   });
@@ -366,7 +366,7 @@ test('every no-match result logs counts and a score, never a title', async () =>
     assert.equal((await bg.lookup(TSP_TITLE, 'tagesspiegel')).kind, 'search', name);
     const line = bg.state.logs.find(entry => entry.text.includes('no direct match'));
     assert(line, name);
-    assert(line.text.startsWith('[spiegel-voebb] tagesspiegel: no direct match ('), line.text);
+    assert(line.text.startsWith('[news-library-lookup] tagesspiegel: no direct match ('), line.text);
     assert(line.text.includes(expected), `${name}: ${line.text}`);
     assert(!/Eiswinter|Polarwirbel|Wohnungen|droht/i.test(line.text), 'no article text in the log');
   }

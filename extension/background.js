@@ -97,12 +97,12 @@ async function lookup(publisher, title) {
     const result = VoebbMatch.rank(title, documents, { now: Date.now(), sources: publisher.sources, variants: publisher.titleVariants(title) });
     if (!state.enabled) return { kind: 'disabled' };
     lastStatus = 'Background search is working.';
-    if (result.reason) console.info(`[spiegel-voebb] direct match withheld: ${result.reason}`);
+    if (result.reason) console.info(`[news-library-lookup] direct match withheld: ${result.reason}`);
     // Counts and a score only (no titles): enough to tell "Genios returned nothing" from "wrong source" from "titles differ".
-    if (result.stats) console.info(`[spiegel-voebb] ${publisher.id}: no direct match (results ${result.stats.results}, from expected sources ${result.stats.accepted}, best score ${result.stats.bestScore}${result.stats.bestExact ? ', exact' : ''})`);
-    if (result.extended) console.info('[spiegel-voebb] matched an older article in the extended window');
+    if (result.stats) console.info(`[news-library-lookup] ${publisher.id}: no direct match (results ${result.stats.results}, from expected sources ${result.stats.accepted}, best score ${result.stats.bestScore}${result.stats.bestExact ? ', exact' : ''})`);
+    if (result.extended) console.info('[news-library-lookup] matched an older article in the extended window');
     // Publication names only, to make a mismatch between the sources we ask for and the names Genios returns visible.
-    if (result.unexpectedSources) console.info(`[spiegel-voebb] ${publisher.id}: results came from unexpected sources: ${result.unexpectedSources.join(', ')}`);
+    if (result.unexpectedSources) console.info(`[news-library-lookup] ${publisher.id}: results came from unexpected sources: ${result.unexpectedSources.join(', ')}`);
     return {
       kind: result.kind,
       url: result.kind === 'match' ? `${ORIGIN}/document/${encodeURIComponent(result.candidate.id)}` : searchUrl(publisher, title),
@@ -115,7 +115,7 @@ async function lookup(publisher, title) {
   } catch (error) {
     const category = error?.category || (controller.signal.aborted ? 'timeout' : 'internal');
     const label = category === 'http' && error.status ? `HTTP ${error.status}` : category;
-    console.warn(`[spiegel-voebb] ${publisher.id} search failed: ${label}`);
+    console.warn(`[news-library-lookup] ${publisher.id} search failed: ${label}`);
     lastStatus = `Search unavailable (${label}). ${HINTS[category]} Searches pause for one minute after a failure.`;
     pauses.set(publisher.id, { until: Date.now() + 60000, message: lastStatus });
     return { kind: 'unavailable', url: ORIGIN, message: lastStatus };

@@ -10,7 +10,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parents[1]
 source = root / 'extension'
 version = json.loads((source / 'manifest.json').read_text())['version']
-destination = root / 'dist' / f'spiegel-voebb-{version}.zip'
+destination = root / 'dist' / f'news-library-lookup-{version}.zip'
 destination.parent.mkdir(exist_ok=True)
 files = json.loads((root / 'scripts' / 'package-files.json').read_text())
 with ZipFile(destination, 'w', ZIP_DEFLATED) as archive:

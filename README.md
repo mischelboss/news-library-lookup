@@ -1,116 +1,101 @@
-# Spiegel via VÖBB
+# News Library Lookup
 
-A Firefox extension prototype that checks paid articles on the Spiegel and Tagesspiegel homepages and adds links to corresponding records in VÖBB's Genios service.
+A Firefox extension that helps you read paid newspaper articles through your public library. On the Spiegel and Tagesspiegel homepages it adds a small icon next to each paid article. The icon opens the matching record in your library's Genios press database, where your library card decides whether you can read it.
 
-**Status:** authenticated background searches, article links, and the homepage prototype have been tried successfully in a real Firefox session. This is an unsigned prototype using an internal website endpoint, not an official VÖBB, Genios, or Spiegel product.
+It is built for [VÖBB](https://www.voebb.de/) (the Berlin public libraries) and its Genios service. It is a hobby project.
 
-## Load it in Firefox
+> **Unofficial.** This project is independent. It is not affiliated with, endorsed by, or supported by VÖBB, Genios, Der Spiegel, or Der Tagesspiegel. All names and trademarks belong to their owners.
 
-1. Clone this repository, or download and extract its source ZIP.
-2. Open `about:debugging#/runtime/this-firefox`.
-3. Choose **Load Temporary Add-on…** and select `extension/manifest.json`.
-4. Allow access to Spiegel, Tagesspiegel, and VÖBB Genios when Firefox requests it. If needed, review the extension's Permissions tab in `about:addons`.
-5. Sign in normally at https://bib-voebb.genios.de/ in the same Firefox profile. A private window or isolated container might not share its session with extension background requests.
-6. Open or reload https://www.spiegel.de/ or https://www.tagesspiegel.de/.
+*Kurzfassung (Deutsch):* Firefox-Erweiterung, die bezahlte Artikel auf spiegel.de und tagesspiegel.de mit dem passenden Treffer in der VÖBB-Genios-Datenbank verknüpft. Du meldest dich selbst mit deinem eigenen Bibliotheksausweis an; die Erweiterung umgeht keine Bezahlschranke und speichert keine Zugangsdaten. Inoffizielles Hobbyprojekt, Firefox (Desktop) ab Version 140.
 
-Temporary add-ons disappear on Firefox restart. Reload them through about:debugging while developing. Version 0.3.0 changed the extension ID to `@spiegel-voebb`; remove any older temporary prototype first so you edit the source you actually load. Firefox 140 or later is required.
+## What it does
 
-## Icons
-
-Each paid headline gets a small round icon right after the site's own paid marker (the "+" on Spiegel, the small red "T" on Tagesspiegel). It never takes extra space under the article. Hover for details; every icon opens Genios in a **new tab**, so the Spiegel page stays where it is.
+- Finds paid cards on the homepages of Spiegel and Tagesspiegel.
+- Searches the publisher's own sources in VÖBB Genios for the headline, using your signed-in session.
+- Shows one of four icons next to the site's paid marker and opens Genios in a new tab when you click it.
+- Stays careful: only a strong, unambiguous title match becomes a direct link. Everything else is a manual search link.
 
 | Icon | Meaning |
 | --- | --- |
 | Grey magnifier | The search is still queued or running |
-| Green check ("Über VÖBB lesen") | A strong, unambiguous title match in the publisher's Genios sources; opens its Genios record. If the article is older than a week, the tooltip says so |
-| Blue magnifier ("In Genios suchen") | No sufficiently confident match; opens a manual search |
-| Amber "!" ("VÖBB anmelden / erneut prüfen") | A session, permission, or network problem interrupted searching; opens Genios so you can sign in |
+| Green check | A strong title match in the publisher's Genios sources; opens that record. If the article is older than a week, the tooltip says so |
+| Blue magnifier | No sufficiently confident match; opens a manual Genios search |
+| Amber "!" | A session, permission, or network problem interrupted searching; opens Genios so you can sign in |
 
-A green icon signals a title match, not guaranteed reading rights. Genios checks full-text access when the document opens.
+A green icon means the titles match. It is not a guarantee that you may read the full text. Genios checks that when the record opens.
 
-The popup has **Pause checks**, **Retry failed**, and **Clear cache** controls. After signing in again, choose **Retry failed** to re-check failed badges without reloading; successful badges are not queried again. After clearing the cache, reload Spiegel. Background searches create no tabs. An already-running request may finish after pausing.
+## What it does not do
 
-When a search finds no direct match, the background console says why with numbers only, never titles: `tagesspiegel: no direct match (results 10, from expected sources 3, best score 0.62)`. Zero results means the article is probably not in Genios (yet) or the query is too narrow; results but none from expected sources means the source names differ (the console then lists the names Genios returned); a low best score means the titles differ.
+- It does not bypass any paywall. It only links to records you can open with your own library account.
+- It does not read, store, or send your password, cookies, or tokens. Firefox handles the session cookies.
+- It does not download or store article text.
 
-The popup status names the last failure category (for example `network`, `HTTP 503`, `timeout`, `content-type`, `json`, or `shape`). The background console logs the same category only, never queries, URLs, headers, cookies, or response bodies.
+## Install
 
-## Install a signed package
+The extension is not listed in a browser store. You can run it from source in Firefox 140 or later on a desktop computer:
 
-You do not need the repository to use a signed package. The maintainer provides a signed `spiegel-voebb-<version>.xpi` (see docs/releasing.md for how it is made). The extension is Firefox desktop only for now.
+1. Clone this repository or download and extract its source ZIP.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Choose **Load Temporary Add-on…** and select `extension/manifest.json`.
+4. Allow access to Spiegel, Tagesspiegel, and VÖBB Genios when Firefox asks. You can review this later in the extension's Permissions tab in `about:addons`.
+5. Sign in at <https://bib-voebb.genios.de/> in the same Firefox profile, with your own VÖBB account. A private window or an isolated container might not share its session with the extension.
+6. Open or reload <https://www.spiegel.de/> or <https://www.tagesspiegel.de/>.
 
-1. Use Firefox 140 or later on a computer.
-2. Open the `.xpi` in Firefox (drag it onto a window, or File → Open File) and read the permission prompt. It lists access to VÖBB Genios, Spiegel, and Tagesspiegel and the data collected ("website content": the headlines sent to Genios).
-3. After adding it, the setup page opens. Sign in to https://bib-voebb.genios.de/ in the same Firefox profile with your own VÖBB account, then open https://www.spiegel.de/ or https://www.tagesspiegel.de/.
-4. To update, open the newer `.xpi` the same way. Settings and cache are kept.
+Temporary add-ons disappear when Firefox restarts. To keep the extension permanently you need a signed package; see [docs/releasing.md](docs/releasing.md).
 
-Each person uses their own library account. Nothing is shared between users or through GitHub.
+The toolbar popup has **Pause checks**, **Retry failed**, and **Clear cache**. After signing in again, **Retry failed** re-checks failed icons without a page reload.
 
-## Work on another device
+## Responsible use
 
-```sh
-git clone https://github.com/mischelboss/spiegel-voebb.git
-cd spiegel-voebb
-npm run check
-npm test
-```
+- The extension uses the same internal search endpoint that the Genios website uses in your browser. It is not an official or documented API, so it can change or stop working without notice.
+- Searches run one at a time with a pause between them, and stop for a minute after a failure. Please do not remove these limits.
+- Check that your library's terms of use allow this kind of automated search before you use it. You are responsible for how you use your own library account.
 
-Each checkout or worktree that you use for browser testing should be loaded into Firefox using its own `extension/manifest.json`. Firefox loads that local folder; editing a different worktree will not update the installed extension.
+## Privacy
 
-Before switching devices, commit and push your work. On the other device, fetch/pull the branch before editing. The project instructions in AGENTS.md travel with the repository.
+- For each paid headline on a supported homepage, the extension sends the words of that headline to VÖBB Genios from your browser. Genios may log these searches. Nothing is sent to the developer or to anyone else.
+- Firefox shows this as the required data type "website content" when you install the extension.
+- Up to 400 results are cached locally: strong matches for six hours, uncertain ones for 20 minutes. Keys are hashes of the publisher and the normalized headline. Values can include matched article titles, dates, and links, which can reveal what you read. The cache never syncs and can be cleared from the popup.
 
-Sign into VÖBB separately on each device. GitHub syncs source code, tests, and documentation; it does not sync your library login or local search cache.
+## How matching works
+
+- Each publisher is one adapter in `extension/publishers.js`: its exact origin, the listing paths that are processed, how a paid card is recognized, how the title is read, and which Genios sources hold its articles. Only homepages are processed today.
+- Titles are normalized (case, accents, punctuation, ß) and up to ten distinct meaningful words are searched, restricted to the publisher's Genios sources.
+- A direct match needs either an exact normalized title (at least three meaningful words) or a token F1 score of at least 0.94 (at least five words). The best candidate must also lead the second by at least 0.12.
+- Freshness guard: a candidate must be at most 7 days old to win. If nothing qualifies, the same results are ranked again with a 365-day window where only an exact title counts, so long-lived articles can still be found. The icon's tooltip says when the article is older.
+- The same article often exists in several Genios sources (for example print and web). Equal titles from different sources count as one article.
+- Authors and teaser text do not affect the score.
+
+More detail is in [docs/architecture.md](docs/architecture.md).
 
 ## Development
 
-Requirements: Node.js 22+ for checks/tests, and Python 3 for ZIP packaging. No npm dependencies or installation step are required.
+Requirements: Node.js 22 or later for checks and tests, and Python 3 for packaging. There are no npm dependencies and no build step.
 
 ```sh
-npm run check
-npm test
-npm run package
+npm run check     # manifest, permissions, packaging allowlist, version alignment, syntax
+npm test          # deterministic tests with simulated browser and network
+npm run package   # writes dist/news-library-lookup-<version>.zip
 ```
 
-Packaging writes `dist/spiegel-voebb-<version>.zip` from the explicit allowlist in `scripts/package-files.json`. `npm run check` fails if an extension file or a file referenced by the manifest or popup is missing from that list. In environments where Python is named `python` rather than `python3`, run `python scripts/package.py` directly.
+Tests use hand-written fixtures and simulated responses. They never call Genios or any publisher site. CI runs the same three commands. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and [docs/testing.md](docs/testing.md) for what is and is not verified.
 
-CI runs the same checks, tests, and packaging, then uploads a downloadable extension ZIP as a workflow artifact. It does not call Genios or publish to a browser store.
-
-After editing, click **Reload** for the extension in about:debugging, then reload the news page. Use **Inspect → Console** for background diagnostics. Do not export or commit authentication headers or cookies.
-
-## Matching and requests
-
-- Each publisher is one adapter in `extension/publishers.js`: its exact origin, the listing paths that are processed, how a paid card is recognized, how the title is read, and which Genios sources hold its articles. Only homepages are processed today (`/` and `/index.html` on Spiegel, `/` on Tagesspiegel).
-- Spiegel: paid cards carry explicit `spon` / `plus-paid` flags; the title is the card's accessible label.
-- Spiegel links to articles as `slug-a-<id>` or just `a-<id>`; placeholder links (`__proto_url__`), links to other sites, and cards paid under another flag domain (for example effilee) are skipped.
-- Tagesspiegel: paid cards carry a small icon followed by the hidden text "Tagesspiegel Plus" inside the headline link; the heading level varies (h2 on lead teasers, h3 on most others), so the heading is taken from that link. The title is the headline as shown, `kicker: headline`. Invisible soft hyphens inside long words are removed.
-- Normalize casing, accents, punctuation, and ß; search up to ten distinct meaningful words.
-- Search only the publisher's Genios sources, requesting the ten newest candidates: `SPIEGEL Plus` for Spiegel; `tagesspiegel.de`, `Der Tagesspiegel`, and `Tagesspiegel CHECKPOINT` for Tagesspiegel (repeated `source` parameters in one request). Source names in responses are compared without regard to case or spacing.
-- Kicker handling (Tagesspiegel): Genios may store the title with or without the kicker, so a candidate is scored against both forms, and the search query uses only the headline words, which appear in either form.
-- The same article often exists in several sources (for example print and web). Records with the same normalized title from different sources count as one article, and the source listed first wins. Several records from the same source still count as ambiguous.
-- Direct matches require at least three meaningful words with an exact normalized title match, or at least five meaningful words with a token F1 score of 0.94 or greater.
-- The best candidate must lead the second by at least 0.12. Ambiguous or generic titles remain manual searches.
-- Freshness guard, two passes over the same results. First, only candidates published within 7 days of today (plus one day of time-zone slack) can win or tie, so a recurring title cannot link to an old edition. If that finds nothing, the same results are ranked again with a window of 365 days; here only an exact title counts, a tie stays ambiguous, and the icon's tooltip says the article is older. This catches long-lived pieces such as Bestseller articles without sending a second request to Genios. Older or undated matches beyond that stay manual searches.
-- Dates are read from `ERSCHEINUNGSDATUM` as `YYYY-MM-DD`, `DD.MM.YYYY`, or `YYYYMMDD`. If Genios uses another format, direct matches disappear and the background console reports `direct match withheld: undated`. Two editions of a weekly series that both fall inside the first window still count as ambiguous.
-- Authors and teaser text do not affect the score, and the card's own date is not used yet.
-- Equivalent titles on the same site share a queued request. Requests run sequentially across all sites, with an 800 ms gap and a 15-second timeout. A failure starts a one-minute cooldown for that publisher only, so a problem with one site's search does not silence the other.
-
-## Privacy and limitations
-
-Queries go directly from the browser to Genios, which may log them. The manifest declares this as required data collection of type `websiteContent`, so Firefox shows it when the extension is installed. This extension never reads or stores passwords, cookies, or tokens; Firefox manages eligible session cookies.
-
-Up to 400 cache entries are kept locally: strong matches for six hours and uncertain results for 20 minutes. Keys are hashes of the publisher and the normalized headline; values may include matched article titles, dates, and links. They can reveal reading interests. Clear them using the popup; they do not sync through Firefox or GitHub.
-
-Publisher markup and the internal Genios endpoint can change. Session renewal, reading entitlement detection, Chrome packaging, signing, and permanent installation remain future work. Supported usage limits for automated search have not been established.
+After editing the source, click **Reload** for the extension in `about:debugging` and reload the news page. **Inspect → Console** shows the background diagnostics. They contain failure categories and counts only, never queries, URLs, headers, cookies, or response bodies.
 
 ## Project layout
 
 ```text
-extension/       Firefox extension sources
-tests/           Deterministic matching, background, and content-script checks (tests/support holds the simulated browser)
-scripts/         Syntax/manifest/allowlist validation and ZIP packaging
-docs/            Architecture and validation notes
-.github/         CI workflow
+extension/   Firefox extension sources (plain JavaScript, no dependencies)
+tests/       Matching, background, content-script, and page tests (tests/support holds the simulated browser)
+scripts/     Validation (check.cjs) and ZIP packaging (package.py)
+docs/        Architecture, testing notes, release guide, roadmap
+.github/     CI workflow
 ```
+
+## Status and limits
+
+This is a working prototype. Publisher markup and the Genios endpoint can change at any time. Direct matches are tested against hand-written fixtures; behavior against the live services depends on a signed-in library account and is checked by hand. Firefox desktop is the only supported browser. Other browsers and more publishers are listed in [docs/roadmap.md](docs/roadmap.md).
 
 ## License
 
-No open-source license has been selected for this prototype.
+Licensed under the [GNU General Public License v3.0](LICENSE). Copyright (c) 2026 mischelboss.

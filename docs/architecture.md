@@ -28,7 +28,7 @@ GET https://bib-voebb.genios.de/api/searchResult/Alle
 
 Responses contain documents with documentId and fields such as ARTIKELTITEL, TL-TITEL, QUELLENNAME, and ERSCHEINUNGSDATUM. A selected document becomes `https://bib-voebb.genios.de/document/{documentId}`.
 
-The fetch uses browser-managed credentials, rejects redirects, and requires JSON. It does not use the separately documented external Genios API or request full article text. An expired session can appear as a redirect/network error; the prototype currently groups these failures under one sign-in/retry message.
+The fetch uses browser-managed credentials, rejects redirects, and requires JSON. It does not use the separately documented external Genios API or request full article text. An expired session can appear as a redirect/network error; these failures are currently grouped under one sign-in/retry message.
 
 ## Future work
 
@@ -36,5 +36,5 @@ The fetch uses browser-managed credentials, rejects redirects, and requires JSON
 - Test session expiry and login recovery without reopening search tabs.
 - Improve date and entitlement handling with verified response fields.
 - Replace the in-memory queue with resumable jobs if browser lifecycle testing shows lost requests.
-- Add a distributable, licensed browser package and explicit service-usage guidance before wider release.
-- Separate publisher and library adapters further when a second integration is authorized.
+- Add explicit service-usage guidance and a store-ready package before any wider release.
+- Separate publisher and library adapters further if a second library is ever added.

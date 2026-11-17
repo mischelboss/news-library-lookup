@@ -29,7 +29,7 @@ assert(manifest.background.scripts.indexOf('publishers.js') >= 0 && manifest.bac
 // Identity and data-use declarations that must stay valid for signing and for installs.
 const gecko = manifest.browser_specific_settings?.gecko ?? {};
 assert(/^[a-zA-Z0-9-._]*@[a-zA-Z0-9-._]+$/.test(gecko.id ?? '') && gecko.id.length <= 80, 'gecko.id must be a valid, stable extension ID');
-assert(!/invalid|prototype|local/i.test(gecko.id), 'gecko.id must not be a placeholder; it keys users’ local data and cannot change after the first signed release');
+assert(!/invalid|placeholder|local/i.test(gecko.id), 'gecko.id must not be a placeholder; it keys users’ local data and cannot change after the first signed release');
 assert(parseInt(gecko.strict_min_version, 10) >= 140, 'gecko.strict_min_version must be 140 or later for built-in data-consent prompts');
 const required = gecko.data_collection_permissions?.required ?? [];
 assert(required.length > 0 && !required.includes('none'), 'Headlines are sent to Genios; declare the data in gecko.data_collection_permissions.required');
